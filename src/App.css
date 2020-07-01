@@ -1,5 +1,6 @@
 .container {
   padding-top: 100px;
+  padding-bottom: 100px;
 }
 .todo-title {
   margin-left: 10px;

@@ -14,7 +14,10 @@ type Todo = { completed: boolean; id: number; title: string; userId: number };
 const TodoList = () => {
   const [initialValues, setInitialValues] = useState<Todo[]>([]);
   const [todos, setTodos] = useState<Todo[]>(initialValues);
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState<string>('All');
+  const [edit, setEdit] = useState<number | boolean>(false);
+  const [editText, setEditText] = useState<string>('');
+  const [newTodoName, setNewTodoName] = useState<string>('');
 
   useEffect(() => {
     async function fetchTodos() {
@@ -51,8 +54,39 @@ const TodoList = () => {
     todosToChange[foundIndex].completed = event.target.checked;
     setInitialValues(todosToChange);
   };
+  const saveEditedTodo = (id: number) => {
+    const foundIndex = initialValues.findIndex((item) => item.id === id);
+    const todosToChange = JSON.parse(JSON.stringify(initialValues));
+    todosToChange[foundIndex].title = editText;
+    setInitialValues(todosToChange);
+    setEdit(false);
+  };
   const deleteTodo = (id: number) => {
     setInitialValues(initialValues.filter((item) => item.id !== id));
+  };
+  const addTodo = () => {
+    const newTodoItem = {
+      completed: false,
+      title: newTodoName,
+      userId: 1,
+    };
+    async function postNewTodo() {
+      let response = await fetch('https://jsonplaceholder.typicode.com/todos', {
+        method: 'POST',
+        body: JSON.stringify(newTodoItem),
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+      });
+      let data = await response.json();
+      //imitate results=10 and set result of fetching to the state
+      const todo = data;
+      todo.id = Math.random();
+      const todosToChange = JSON.parse(JSON.stringify(initialValues));
+      setInitialValues([...todosToChange, todo]);
+      setNewTodoName('');
+    }
+    postNewTodo();
   };
   return (
     <Container>
@@ -83,11 +117,44 @@ const TodoList = () => {
                 checked={item.completed}
                 onChange={(event) => changetodoStatus(event, item.id)}
               />
-              <span className="todo-title">{item.title}</span>
+              {edit === item.id ? (
+                <FormControl
+                  placeholder={item.title}
+                  aria-label="title"
+                  aria-describedby="basic-addon1"
+                  onChange={(event) => setEditText(event.target.value)}
+                />
+              ) : (
+                <span className="todo-title">{item.title}</span>
+              )}
+              {edit === item.id && (
+                <React.Fragment>
+                  <InputGroup.Append>
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => setEdit(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </InputGroup.Append>
+                  <InputGroup.Append>
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => saveEditedTodo(item.id)}
+                    >
+                      Save
+                    </Button>
+                  </InputGroup.Append>
+                </React.Fragment>
+              )}
             </InputGroup>
             {/*hardcodet because jsonplaceholder not return due date for todos*/}
             <p className="todo-due-date">due date: 11.08.2020</p>
-            <Button variant="primary" size="sm">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setEdit(item.id)}
+            >
               Edit
             </Button>{' '}
             <Button
@@ -105,9 +172,13 @@ const TodoList = () => {
           placeholder="Name fo todo"
           aria-label="Name fo todo"
           aria-describedby="basic-addon2"
+          onChange={(event) => setNewTodoName(event.target.value)}
+          value={newTodoName}
         />
         <InputGroup.Append>
-          <Button variant="outline-secondary">Add</Button>
+          <Button variant="outline-secondary" onClick={addTodo}>
+            Add
+          </Button>
         </InputGroup.Append>
       </InputGroup>
     </Container>
