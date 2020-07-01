@@ -1,3 +1,15 @@
 .container {
   padding-top: 100px;
 }
+.todo-title {
+  margin-left: 10px;
+}
+.list-group-item-primary {
+  background-color: #ffffff;
+  color: #212529;
+}
+.todo-due-date {
+  font-size: 12px;
+  margin-top: 10px;
+  color: #004085;
+}

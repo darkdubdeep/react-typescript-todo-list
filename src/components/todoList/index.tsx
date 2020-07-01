@@ -14,8 +14,7 @@ type Todo = { completed: boolean; id: number; title: string; userId: number };
 const TodoList = () => {
   const [initialValues, setInitialValues] = useState<Todo[]>([]);
   const [todos, setTodos] = useState<Todo[]>(initialValues);
-  const [filter, setFilter] = useState('all');
-  const [completedTodo, setCompletedTodo] = useState<Number>();
+  const [filter, setFilter] = useState('All');
 
   useEffect(() => {
     async function fetchTodos() {
@@ -24,6 +23,7 @@ const TodoList = () => {
       //imitate results=10 and set result of fetching to the state
       const todos = data.slice(0, 10);
       setInitialValues(todos);
+      /*set fetched todos to the local storage*/
       window.localStorage.setItem('todos', JSON.stringify(todos));
     }
     const initialValues = JSON.parse(window.localStorage.getItem('todos')!);
@@ -35,9 +35,9 @@ const TodoList = () => {
   }, []);
   useEffect(() => {
     /*Filtering todos*/
-    if (filter === 'all') {
+    if (filter === 'All') {
       setTodos(initialValues);
-    } else if (filter === 'completed') {
+    } else if (filter === 'Completed') {
       setTodos(initialValues.filter((item) => item.completed === true));
     } else {
       setTodos(initialValues.filter((item) => item.completed === false));
@@ -51,32 +51,52 @@ const TodoList = () => {
     todosToChange[foundIndex].completed = event.target.checked;
     setInitialValues(todosToChange);
   };
+  const deleteTodo = (id: number) => {
+    setInitialValues(initialValues.filter((item) => item.id !== id));
+  };
   return (
     <Container>
       <DropdownButton
         variant="outline-secondary"
-        title="Show"
+        title={filter}
         id="input-group-dropdown-1"
       >
-        <Dropdown.Item href="#" onClick={() => setFilter('all')}>
+        <Dropdown.Item href="#" onClick={() => setFilter('All')}>
           All
         </Dropdown.Item>
-        <Dropdown.Item href="#" onClick={() => setFilter('completed')}>
+        <Dropdown.Item href="#" onClick={() => setFilter('Completed')}>
           Completed
         </Dropdown.Item>
-        <Dropdown.Item href="#" onClick={() => setFilter('uncompleted')}>
+        <Dropdown.Item href="#" onClick={() => setFilter('Uncompleted')}>
           Uncompleted
         </Dropdown.Item>
       </DropdownButton>
       <ListGroup>
         {todos.map((item) => (
-          <ListGroup.Item key={item.id}>
-            <InputGroup.Checkbox
-              aria-label="todo status checkbox"
-              checked={item.completed}
-              onChange={(event) => changetodoStatus(event, item.id)}
-            />
-            {item.title}
+          <ListGroup.Item
+            key={item.id}
+            variant={item.completed ? 'success' : 'primary'}
+          >
+            <InputGroup>
+              <InputGroup.Checkbox
+                aria-label="todo status checkbox"
+                checked={item.completed}
+                onChange={(event) => changetodoStatus(event, item.id)}
+              />
+              <span className="todo-title">{item.title}</span>
+            </InputGroup>
+            {/*hardcodet because jsonplaceholder not return due date for todos*/}
+            <p className="todo-due-date">due date: 11.08.2020</p>
+            <Button variant="primary" size="sm">
+              Edit
+            </Button>{' '}
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => deleteTodo(item.id)}
+            >
+              Delete
+            </Button>
           </ListGroup.Item>
         ))}
       </ListGroup>
