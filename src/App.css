@@ -4,6 +4,7 @@
 }
 .todo-title {
   margin-left: 10px;
+  margin-bottom: 0;
 }
 .list-group-item-primary {
   background-color: #ffffff;

@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 
 /*Bootstrap components*/
 import Button from 'react-bootstrap/Button';
-import DropdownButton from 'react-bootstrap/DropdownButton';
-import Dropdown from 'react-bootstrap/Dropdown';
 import Container from 'react-bootstrap/Container';
 import ListGroup from 'react-bootstrap/ListGroup';
 import InputGroup from 'react-bootstrap/InputGroup';
 import FormControl from 'react-bootstrap/FormControl';
+
+/*Custom cumoponents*/
+import FilterDropdown from '../filterDropdown';
+import EditFormControl from '../editFormControl';
 
 type Todo = { completed: boolean; id: number; title: string; userId: number };
 
@@ -20,21 +22,14 @@ const TodoList = () => {
   const [newTodoName, setNewTodoName] = useState<string>('');
 
   useEffect(() => {
-    async function fetchTodos() {
+    const fetchTodos = async () => {
       let response = await fetch('https://jsonplaceholder.typicode.com/todos');
       let data = await response.json();
-      //imitate results=10 and set result of fetching to the state
+      //imitate "results=10" query to backend and set result of fetching to the state
       const todos = data.slice(0, 10);
       setInitialValues(todos);
-      /*set fetched todos to the local storage*/
-      window.localStorage.setItem('todos', JSON.stringify(todos));
-    }
-    const initialValues = JSON.parse(window.localStorage.getItem('todos')!);
-    if (initialValues) {
-      setInitialValues(initialValues);
-    } else {
-      fetchTodos();
-    }
+    };
+    fetchTodos();
   }, []);
   useEffect(() => {
     /*Filtering todos*/
@@ -50,7 +45,9 @@ const TodoList = () => {
   /*set complete status of todo*/
   const changetodoStatus = (event: any, id: number) => {
     const foundIndex = initialValues.findIndex((item) => item.id === id);
-    const todosToChange = JSON.parse(JSON.stringify(initialValues));
+    const todosToChange = JSON.parse(
+      JSON.stringify(initialValues)
+    ); /*JSON.parse used for deep copy of array*/
     todosToChange[foundIndex].completed = event.target.checked;
     setInitialValues(todosToChange);
   };
@@ -70,7 +67,7 @@ const TodoList = () => {
       title: newTodoName,
       userId: 1,
     };
-    async function postNewTodo() {
+    const postNewTodo = async () => {
       let response = await fetch('https://jsonplaceholder.typicode.com/todos', {
         method: 'POST',
         body: JSON.stringify(newTodoItem),
@@ -79,32 +76,21 @@ const TodoList = () => {
         },
       });
       let data = await response.json();
-      //imitate results=10 and set result of fetching to the state
       const todo = data;
-      todo.id = Math.random();
+      /*this not the best approach below and needs because jsonplacecholder always returns id=201,
+      only for demo apps*/
+      let cryptoArray = new Uint32Array(1);
+      window.crypto.getRandomValues(cryptoArray);
+      todo.id = cryptoArray[0];
       const todosToChange = JSON.parse(JSON.stringify(initialValues));
       setInitialValues([...todosToChange, todo]);
       setNewTodoName('');
-    }
+    };
     postNewTodo();
   };
   return (
     <Container>
-      <DropdownButton
-        variant="outline-secondary"
-        title={filter}
-        id="input-group-dropdown-1"
-      >
-        <Dropdown.Item href="#" onClick={() => setFilter('All')}>
-          All
-        </Dropdown.Item>
-        <Dropdown.Item href="#" onClick={() => setFilter('Completed')}>
-          Completed
-        </Dropdown.Item>
-        <Dropdown.Item href="#" onClick={() => setFilter('Uncompleted')}>
-          Uncompleted
-        </Dropdown.Item>
-      </DropdownButton>
+      <FilterDropdown filter={filter} setFilter={setFilter} />
       <ListGroup>
         {todos.map((item) => (
           <ListGroup.Item
@@ -116,39 +102,23 @@ const TodoList = () => {
                 aria-label="todo status checkbox"
                 checked={item.completed}
                 onChange={(event) => changetodoStatus(event, item.id)}
+                id={String(item.id)}
               />
               {edit === item.id ? (
-                <FormControl
-                  placeholder={item.title}
-                  aria-label="title"
-                  aria-describedby="basic-addon1"
-                  onChange={(event) => setEditText(event.target.value)}
+                <EditFormControl
+                  title={item.title}
+                  itemId={item.id}
+                  setEditText={setEditText}
+                  setEdit={setEdit}
+                  saveEditedTodo={saveEditedTodo}
                 />
               ) : (
-                <span className="todo-title">{item.title}</span>
-              )}
-              {edit === item.id && (
-                <React.Fragment>
-                  <InputGroup.Append>
-                    <Button
-                      variant="outline-secondary"
-                      onClick={() => setEdit(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </InputGroup.Append>
-                  <InputGroup.Append>
-                    <Button
-                      variant="outline-secondary"
-                      onClick={() => saveEditedTodo(item.id)}
-                    >
-                      Save
-                    </Button>
-                  </InputGroup.Append>
-                </React.Fragment>
+                <label className="todo-title" htmlFor={String(item.id)}>
+                  {item.title}
+                </label>
               )}
             </InputGroup>
-            {/*hardcodet because jsonplaceholder not return due date for todos*/}
+            {/*hardcoded because jsonplaceholder not returns "due date" for todos list*/}
             <p className="todo-due-date">due date: 11.08.2020</p>
             <Button
               variant="primary"
@@ -169,8 +139,8 @@ const TodoList = () => {
       </ListGroup>
       <InputGroup>
         <FormControl
-          placeholder="Name fo todo"
-          aria-label="Name fo todo"
+          placeholder="Name for todo"
+          aria-label="Name for todo"
           aria-describedby="basic-addon2"
           onChange={(event) => setNewTodoName(event.target.value)}
           value={newTodoName}
