@@ -30,7 +30,11 @@ const EditFormControl: React.FunctionComponent<Props> = ({
         onChange={(event) => setEditText(event.target.value)}
       />
       <InputGroup.Append>
-        <Button variant="outline-secondary" onClick={() => setEdit(false)}>
+        <Button
+          variant="outline-secondary"
+          onClick={() => setEdit(false)}
+          size="sm"
+        >
           Cancel
         </Button>
       </InputGroup.Append>
@@ -38,6 +42,7 @@ const EditFormControl: React.FunctionComponent<Props> = ({
         <Button
           variant="outline-secondary"
           onClick={() => saveEditedTodo(itemId)}
+          size="sm"
         >
           Save
         </Button>
